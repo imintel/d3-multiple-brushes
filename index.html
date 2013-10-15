@@ -1,11 +1,3 @@
-<!-- 
-  ~ Created on 6/6/13 by M. M. Myers <mmmyers@missionfocus.com>
-  ~
-  ~ Copyright (c) 2013  Institute for Modern Intelligence, 501(c)3. All Rights Reserved.
-  ~ This software is proprietary information of the Institute for Modern Intelligence.
-  ~
-  ~ Basic proof of concept for demo version of sign space visualization.
-   -->
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
         "http://www.w3.org/TR/html4/strict.dtd">
@@ -138,17 +130,13 @@ path {
       } else {
         setPtr("all");
       }
-
     }
 
     function setPtr(ev) {
-
       $('#brush' + count).css("pointer-events", ev);
-
     }
 
     function newBrush() {
-
       count++;
 
       var brush = d3.svg.brush()
@@ -167,20 +155,12 @@ path {
       brushes.push(brush);
 
       return brush;
-
-    }
-
-    function brushstart() {
-
-
     }
 
     function brushend() {
-
       brushLoc = getBrushLoc(this);
       setPtr("none");
       printData();
-
     }
 
     function printData() {
@@ -194,20 +174,16 @@ path {
     }
 
     function getBrushLoc(br) {
-
       var brusha = $(br);
       var x = parseInt(brusha.find('.extent').attr('x'), 10);
       var x1 = x + parseInt(brusha.find('.extent').attr('width'), 10);
       return [x, x1];
-
     }
 
     function getMousePos(event, element) {
-
       var offset = element.offset();
       var x = event.pageX - offset.left;
       return x;
-
     }
 
 </script>
