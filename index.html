@@ -1,0 +1,215 @@
+<!-- 
+  ~ Created on 6/6/13 by M. M. Myers <mmmyers@missionfocus.com>
+  ~
+  ~ Copyright (c) 2013  Institute for Modern Intelligence, 501(c)3. All Rights Reserved.
+  ~ This software is proprietary information of the Institute for Modern Intelligence.
+  ~
+  ~ Basic proof of concept for demo version of sign space visualization.
+   -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+<style>
+svg {
+  font: 10px sans-serif;
+}
+
+path {
+  fill: blue;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+</style>
+<body>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src='http://code.jquery.com/jquery-latest.min.js' type='text/javascript'></script>
+
+<script>
+
+ var margin = {
+      top: 10,
+      right: 10,
+      bottom: 100,
+      left: 40
+    },
+    margin2 = {
+      top: 50,
+      right: 10,
+      bottom: 20,
+      left: 40
+    },
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom,
+    height2 = 500 - margin2.top - margin2.bottom;
+
+    var brushLoc = [0, 0];
+    var newLoc = [0, 0];
+    var count = 0;
+    var brushes = [];
+
+    var parseDate = d3.time.format("%b %Y").parse;
+
+    var x = d3.time.scale().range([0, width]),
+      x2 = d3.time.scale().range([0, width]),
+      y = d3.scale.linear().range([height, 0]),
+      y2 = d3.scale.linear().range([height2, 0]);
+
+    var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+      xAxis2 = d3.svg.axis().scale(x2).orient("bottom");
+
+    var area2 = d3.svg.area()
+      .interpolate("monotone")
+      .x(function(d) {
+        return x2(d.date);
+      })
+      .y0(height2)
+      .y1(function(d) {
+        return y2(d.price);
+      });
+
+    var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom);
+
+    svg.append("defs").append("clipPath")
+      .attr("id", "clip")
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height);
+
+    var context = svg.append("g")
+      .attr("class", "xplane")
+      .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+    d3.csv("sp500.csv", function(error, data) {
+
+      data.forEach(function(d) {
+        d.date = parseDate(d.date);
+        d.price = +d.price;
+      });
+
+      x.domain(d3.extent(data.map(function(d) {
+        return d.date;
+      })));
+      y.domain([0, d3.max(data.map(function(d) {
+        return d.price;
+      }))]);
+      x2.domain(x.domain());
+      y2.domain(y.domain());
+
+      context.append("path")
+        .datum(data)
+        .attr("d", area2);
+
+      context.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height2 + ")")
+        .call(xAxis2);
+
+      brush = newBrush();
+
+      $(".xplane").click(click);
+
+    });
+
+    function click(e) {
+
+      var newLoc = getMousePos(e, $(".xplane"));
+
+      if (window.event.metaKey) {
+        if (newLoc < brushLoc[0] || newLoc > brushLoc[1]) {
+          setPtr("none");
+          brush = newBrush();
+        } else {
+          setPtr("all");
+        }
+      } else {
+        setPtr("all");
+      }
+
+    }
+
+    function setPtr(ev) {
+
+      $('#brush' + count).css("pointer-events", ev);
+
+    }
+
+    function newBrush() {
+
+      count++;
+
+      var brush = d3.svg.brush()
+        .x(x2)
+        .on("brushstart", brushstart)
+        .on("brushend", brushend);
+
+      context.append("g")
+        .attr("class", "x brush")
+        .call(brush)
+        .selectAll("rect")
+        .attr("y", -6)
+        .attr("id", "brush")
+        .attr("height", height2 + 7);
+
+      brushes.push(brush);
+
+      return brush;
+
+    }
+
+    function brushstart() {
+
+
+    }
+
+    function brushend() {
+
+      brushLoc = getBrushLoc(this);
+      setPtr("none");
+      printData();
+
+    }
+
+    function printData() {
+      var view = $('.extentView');
+      view.empty();
+      var count = 1;
+      brushes.forEach(function(br){
+        view.append('<p>Brush '+count+': '+br.extent()[0]+' to '+br.extent()[1]+'</p>');
+        count++;
+      });
+    }
+
+    function getBrushLoc(br) {
+
+      var brusha = $(br);
+      var x = parseInt(brusha.find('.extent').attr('x'), 10);
+      var x1 = x + parseInt(brusha.find('.extent').attr('width'), 10);
+      return [x, x1];
+
+    }
+
+    function getMousePos(event, element) {
+
+      var offset = element.offset();
+      var x = event.pageX - offset.left;
+      return x;
+
+    }
+
+</script>
+<div class="extentView">
+</body>
